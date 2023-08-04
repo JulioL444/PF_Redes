@@ -1,0 +1,156 @@
+#include <WiFi.h>
+#include <WebServer.h>
+#include "DFRobotDFPlayerMini.h"
+
+// WiFi credentials
+const char* ssid = "Nexxt_2D7348";
+const char* password = "ganancias5";
+
+int a = 15, b = 2, c = 4, d = 5, e = 18, f = 22, g = 21;
+int value = 0;
+
+WebServer server(80);
+HardwareSerial mySerial(1);
+DFRobotDFPlayerMini myDFPlayer;
+
+void handleRoot() {
+  if (server.method() == HTTP_POST) {
+    String incomingData = server.arg("plain");
+    int newValue = incomingData.toInt();
+    Serial.println("Datos recibidos: " + String(newValue));
+
+    // Comprobar si el valor recibido es diferente al último valor
+    if (newValue != value) {
+      value = newValue;
+
+      // Controlar el display de 7 segmentos basado en el valor recibido
+      if (value == 1) {
+        digitalWrite(a, LOW);
+        digitalWrite(b, HIGH);
+        digitalWrite(c, HIGH);
+        digitalWrite(d, LOW);
+        digitalWrite(e, LOW);
+        digitalWrite(f, LOW);
+        digitalWrite(g, LOW);
+        myDFPlayer.play(2); // Reproducir archivo "0001.mp3"
+      } else if (value == 2) {
+        digitalWrite(a, HIGH);
+        digitalWrite(c, LOW);
+        digitalWrite(d, HIGH);
+        digitalWrite(e, HIGH);
+        digitalWrite(f, LOW);
+        digitalWrite(g, HIGH);
+        myDFPlayer.play(3); // Reproducir archivo "0002.mp3"
+      } else if (value == 3) {
+        digitalWrite(a, HIGH);
+        digitalWrite(b, HIGH);
+        digitalWrite(c, HIGH);
+        digitalWrite(d, HIGH);
+        digitalWrite(e, LOW);
+        digitalWrite(f, LOW);
+        digitalWrite(g, HIGH);
+        myDFPlayer.play(4); // Reproducir archivo "0003.mp3"
+      } else if (value == 4) {
+        digitalWrite(a, LOW);
+        digitalWrite(b, HIGH);
+        digitalWrite(c, HIGH);
+        digitalWrite(d, LOW);
+        digitalWrite(e, LOW);
+        digitalWrite(f, HIGH);
+        digitalWrite(g, HIGH);
+        myDFPlayer.play(5); // Reproducir archivo "0004.mp3"
+      } else if (value == 5) {
+        digitalWrite(a, HIGH);
+        digitalWrite(b, LOW);
+        digitalWrite(c, HIGH);
+        digitalWrite(d, HIGH);
+        digitalWrite(e, LOW);
+        digitalWrite(f, HIGH);
+        digitalWrite(g, HIGH);
+        myDFPlayer.play(6); // Reproducir archivo "0005.mp3"
+      } else if (value == 0) {
+        digitalWrite(a, HIGH);
+        digitalWrite(b, HIGH);
+        digitalWrite(c, HIGH);
+        digitalWrite(d, HIGH);
+        digitalWrite(e, HIGH);
+        digitalWrite(f, HIGH);
+        digitalWrite(g, LOW);
+        myDFPlayer.play(0); // Reproducir archivo "0000.mp3"
+      } else if (value == 6) {
+        myDFPlayer.play(7); // Reproducir archivo "0007.mp3"
+      }
+      else if (value == 7) {
+        myDFPlayer.play(8); // Reproducir archivo "0008.mp3"
+      }
+    }
+
+    server.send(200, "text/plain", "OK");
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(a, OUTPUT);
+  pinMode(b, OUTPUT);
+  pinMode(c, OUTPUT);
+  pinMode(d, OUTPUT);
+  pinMode(e, OUTPUT);
+  pinMode(f, OUTPUT);
+  pinMode(g, OUTPUT);
+
+  mySerial.begin(9600, SERIAL_8N1, 16, 17); // Inicializar HardwareSerial
+
+  if (!myDFPlayer.begin(mySerial)) {
+    Serial.println("Error al inicializar DFPlayer Mini");
+    while (true);
+  }
+
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Conectando a WiFi...");
+  }
+  Serial.println("Conectado a WiFi");
+  Serial.print("Dirección IP asignada: ");
+  Serial.println(WiFi.localIP());
+
+  server.on("/", handleRoot);
+  server.begin();
+  Serial.println("Servidor iniciado");
+
+  Serial.println();
+  Serial.println(F("DFRobot DFPlayer Mini Demo"));
+  Serial.println(F("Initializing DFPlayer ... (May take 3~5 seconds)"));
+
+  if (!myDFPlayer.begin(mySerial)) {
+    Serial.println(myDFPlayer.readType(), HEX);
+    Serial.println(F("Unable to begin:"));
+    Serial.println(F("1.Please recheck the connection!"));
+    Serial.println(F("2.Please insert the SD card!"));
+    while (true);
+  }
+  Serial.println(F("DFPlayer Mini online."));
+
+  myDFPlayer.setTimeOut(500); //Set serial communication timeout to 500ms
+
+  //----Set volume----
+  myDFPlayer.volume(30);  //Set volume value (0~30).
+  myDFPlayer.volumeUp(); //Volume Up
+  myDFPlayer.volumeDown(); //Volume Down
+
+  //----Set different EQ----
+  myDFPlayer.EQ(DFPLAYER_EQ_NORMAL);
+
+  //----Set device: SD card----
+  myDFPlayer.outputDevice(DFPLAYER_DEVICE_SD);
+
+  //----Mp3 control----
+  myDFPlayer.pause(); // Pause the mp3
+
+  Serial.println("DFPlayer Mini ready");
+}
+
+void loop() {
+  server.handleClient();
+}
