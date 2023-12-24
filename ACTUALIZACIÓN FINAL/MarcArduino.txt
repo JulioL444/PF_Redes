@@ -35,6 +35,7 @@ void handleRoot() {
         myDFPlayer.play(2); // Reproducir archivo "0001.mp3"
       } else if (value == 2) {
         digitalWrite(a, HIGH);
+        digitalWrite(b, HIGH);
         digitalWrite(c, LOW);
         digitalWrite(d, HIGH);
         digitalWrite(e, HIGH);
